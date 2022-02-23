@@ -1,0 +1,31 @@
+Amir Mehrafsa对所有人说： 08:30 AM
+Hello everyone we will wait a few minutes so more people could join  the meeting.
+Liam Franke对所有人说： 10:56 AM
+RACE=
+
+# uncomment this to run the tests with the Go race detector.
+#RACE=-race
+
+# run the test in a fresh sub-directory.
+rm -rf mr-tmp
+mkdir mr-tmp || exit 1
+cd mr-tmp || exit 1
+rm -f mr-*
+
+# make sure software is freshly built.
+(cd ../../mrapps && go build $RACE -buildmode=plugin wc.go) || exit 1
+(cd .. && go build $RACE mrmaster.go) || exit 1
+(cd .. && go build $RACE mrworker.go) || exit 1
+
+echo '***' 2 Workers - Timing Test.
+
+timeout -k 2s 180s ../mrmaster ../pg*txt &
+
+# give the master time to create the sockets.
+sleep 1
+
+# start multiple workers.
+timeout -k 0.1s 180s ../mrworker ../../mrapps/wc.so &
+timeout -k 0.1s 180s ../mrworker ../../mrapps/wc.so &
+
+wait
